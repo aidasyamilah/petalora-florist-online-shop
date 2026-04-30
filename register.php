@@ -361,6 +361,28 @@ Delivery Information (Melaka Only)
 
 <script>
 
+const areaData = {
+    "Melaka Tengah": [
+        "Ayer Keroh",
+        "Bukit Baru",
+        "Batu Berendam",
+        "Kota Laksamana",
+        "Ujong Pasir",
+        "Klebang"
+    ],
+    "Alor Gajah": [
+        "Masjid Tanah",
+        "Durian Tunggal",
+        "Lubok China",
+        "Sungai Udang"
+    ],
+    "Jasin": [
+        "Merlimau",
+        "Bemban",
+        "Sungai Rambai"
+    ]
+};
+
 /* =========================
    FULL NAME
 ========================= */
@@ -565,12 +587,12 @@ function validateArea(){
         return false;
     }
 
-    if(!areaData[d].includes(a.value)){
-        msg.innerText = "Invalid area";
-        msg.className = "msg error";
-        a.classList.add("error");
-        return false;
-    }
+    if(!areaData[d] || !areaData[d].includes(a.value)){
+    msg.innerText = "Invalid area";
+    msg.className = "msg error";
+    a.classList.add("error");
+    return false;
+}
 
     msg.innerText = "✔ Valid";
     msg.className = "msg success";
@@ -589,6 +611,26 @@ function scrollToError(){
     }
 }
 
+function updateArea(){
+    const district = document.getElementById("district").value;
+    const areaSelect = document.getElementById("area");
+
+    areaSelect.innerHTML = '<option value="">Area</option>';
+
+    if(!district) return;
+
+    areaData[district].forEach(area => {
+        const opt = document.createElement("option");
+        opt.value = area;
+        opt.textContent = area;
+        areaSelect.appendChild(opt);
+    });
+
+    // ✅ reset validation UI
+    areaSelect.classList.remove("error","success");
+    document.getElementById("areaMsg").innerText = "";
+}
+
 /* =========================
    FINAL CHECK
 ========================= */
@@ -602,7 +644,7 @@ function validateForm(){
     const v7 = validateArea();
 
     if(!(v1 && v2 && v3 && v4 && v5 && v6 && v7)){
-        scrollToError();   // ⭐重点
+        scrollToError();   
         return false;
     }
 
