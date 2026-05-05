@@ -3,17 +3,22 @@ session_start();
 include "header.php";
 include "php/db.php";
 
-// get category id
-$category_id = isset($_GET['category_id']) ? $_GET['category_id'] : 0;
+/* =========================
+   GET CATEGORY ID
+========================= */
+$category_id = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
 
-// get category name
+/* =========================
+   GET CATEGORY NAME
+========================= */
 $catName = "All Products";
 
 if($category_id > 0){
-    $stmt = $conn->prepare("SELECT category_name FROM categories WHERE category_id = ?");
+    $stmt = $conn->prepare("SELECT category_name FROM categories WHERE category_id=?");
     $stmt->bind_param("i", $category_id);
     $stmt->execute();
     $res = $stmt->get_result();
+
     if($row = $res->fetch_assoc()){
         $catName = $row['category_name'];
     }
@@ -37,6 +42,7 @@ body{
     font-family:'Playfair Display',serif;
 }
 
+/* GRID */
 .container{
     padding:40px 80px;
     display:grid;
@@ -44,6 +50,7 @@ body{
     gap:25px;
 }
 
+/* CARD */
 .card{
     background:white;
     border-radius:16px;
@@ -72,50 +79,68 @@ body{
     font-weight:600;
     margin-top:5px;
 }
+
+.stock{
+    font-size:12px;
+    color:#777;
+}
 </style>
 
 <div class="banner">
-    <?php echo $catName; ?>
+    <?= $catName ?>
 </div>
 
 <div class="container">
 
 <?php
-
+/* =========================
+   GET PRODUCTS
+========================= */
 if($category_id > 0){
-    $stmt = $conn->prepare("SELECT * FROM products WHERE category_id = ?");
+    $stmt = $conn->prepare("SELECT * FROM products WHERE category_id=? ORDER BY product_id DESC");
     $stmt->bind_param("i", $category_id);
-}else{
-    $stmt = $conn->prepare("SELECT * FROM products");
+} else {
+    $stmt = $conn->prepare("SELECT * FROM products ORDER BY product_id DESC");
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
 
-if($result->num_rows > 0){
+if($result && $result->num_rows > 0){
 
     while($row = $result->fetch_assoc()){
+
+        $img = !empty($row['product_image']) ? $row['product_image'] : 'image/default.png';
 ?>
 
 <div class="card"
-onclick="location.href='product-details.php?product_id=<?php echo $row['product_id']; ?>'">
+onclick="location.href='product-details.php?product_id=<?= $row['product_id'] ?>'">
 
-    <img src="<?php echo $row['product_image'] ?: 'image/default.png'; ?>">
+    <img src="<?= $img ?>" alt="<?= $row['product_name'] ?>">
 
     <div class="card-body">
-        <h3><?php echo $row['product_name']; ?></h3>
-        <div class="price">RM<?php echo $row['product_price']; ?></div>
+        <h3><?= $row['product_name'] ?></h3>
+
+        <div class="price">
+            RM <?= number_format($row['product_price'],2) ?>
+        </div>
+
+        <div class="stock">
+            Stock: <?= $row['stock_quantity'] ?>
+        </div>
     </div>
 
 </div>
 
-<?php
-    }
+<?php } ?>
 
-}else{
-    echo "<p>No products found</p>";
-}
-?>
+<?php } else { ?>
+
+    <div style="text-align:center;width:100%;">
+        <h3>No products found 🌸</h3>
+    </div>
+
+<?php } ?>
 
 </div>
 
