@@ -1,4 +1,5 @@
 <?php
+require 'config.php';
 include "db.php";
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -8,9 +9,6 @@ require '../phpmailer/src/PHPMailer.php';
 require '../phpmailer/src/SMTP.php';
 require '../phpmailer/src/Exception.php';
 
-// ==========================
-// GET EMAIL
-// ==========================
 $email = trim($_POST['email'] ?? '');
 
 if (empty($email)) {
@@ -20,9 +18,7 @@ if (empty($email)) {
 
 $email = filter_var($email, FILTER_SANITIZE_EMAIL);
 
-// ==========================
 // CHECK USER
-// ==========================
 $stmt = $conn->prepare("SELECT * FROM users WHERE email=?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -30,9 +26,6 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
 
-    // ==========================
-    // TOKEN
-    // ==========================
     $token = bin2hex(random_bytes(50));
     $expiry = date("Y-m-d H:i:s", strtotime("+24 hours"));
 
@@ -44,31 +37,31 @@ if ($result->num_rows > 0) {
     $update->bind_param("sss", $token, $expiry, $email);
     $update->execute();
 
-    // ==========================
-    // LINK
-    // ==========================
-    $base = "http://localhost/petalora/online_florist/";
-    $link = $base . "reset_password.php?token=" . urlencode($token);
+    $link = $base_url . "reset_password.php?token=" . urlencode($token);
 
-    // ==========================
-    // EMAIL
-    // ==========================
     $mail = new PHPMailer(true);
 
     try {
 
         $mail->isSMTP();
+        $mail->SMTPDebug = 0;
+
+        // ==========================
+        // 🔥 FIXED SMTP SETTINGS
+        // ==========================
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
 
-        // 🔥 YOUR GMAIL
-        $mail->Username = 'yourgmail@gmail.com';
-        $mail->Password = 'YOUR_APP_PASSWORD'; // 16 chars, no spaces
+        $mail->Username = 'wongruoxuan0318@gmail.com';
+        $mail->Password = 'mllqeddchnwcxbwc';
 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+        // ⭐ CHANGE HERE (IMPORTANT FIX)
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = 465;
 
-        // FIX XAMPP SSL ISSUE
+        // ==========================
+        // FIX SSL ERROR
+        // ==========================
         $mail->SMTPOptions = [
             'ssl' => [
                 'verify_peer' => false,
@@ -77,9 +70,7 @@ if ($result->num_rows > 0) {
             ]
         ];
 
-        // IMPORTANT SETTINGS
-        $mail->CharSet = "UTF-8";
-        $mail->setFrom('yourgmail@gmail.com', 'Petalora');
+        $mail->setFrom('wongruoxuan0318@gmail.com', 'Petalora');
         $mail->addAddress($email);
 
         $mail->isHTML(true);
