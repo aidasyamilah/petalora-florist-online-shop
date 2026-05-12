@@ -401,24 +401,29 @@ z-index:9999;
 
 <div class="categories">
 
-<div class="cat-card" onclick="location.href='category.php'">
-<img src="image/anniversary/33StalksSoapPinkRoses.png">
-<p>Anniversary</p>
+<div class="cat-card" onclick="location.href='category.php?filter=Anniversary'">
+    <img src="image/anniversary/33StalksSoapPinkRoses.png">
+    <p>Anniversary</p>
 </div>
 
-<div class="cat-card" onclick="location.href='category.php'">
-<img src="image/wedding/Fresh Mix Roses & CarnationFlower Bridal Hand Bouquet.png">
-<p>Wedding</p>
+<div class="cat-card" onclick="location.href='category.php?filter=Wedding'">
+    <img src="image/wedding/Fresh Mix Roses & CarnationFlower Bridal Hand Bouquet.png">
+    <p>Wedding</p>
 </div>
 
-<div class="cat-card" onclick="location.href='category.php'">
-<img src="image/graduation/Soap Roses Mix Sunflower Bouquet.png">
-<p>Graduation</p>
+<div class="cat-card" onclick="location.href='category.php?filter=Graduation'">
+    <img src="image/graduation/Soap Roses Mix Sunflower Bouquet.png">
+    <p>Graduation</p>
 </div>
 
-<div class="cat-card" onclick="location.href='category.php'">
-<img src="image/mother/Fresh Mix Carnation & Matthiola.png">
-<p>Mother's Day</p>
+<div class="cat-card" onclick="location.href='category.php?filter=Mother%27s%20Day'">
+    <img src="image/mother/Fresh Mix Carnation & Matthiola.png">
+    <p>Mother's Day</p>
+</div>
+
+<div class="cat-card" onclick="location.href='category.php?filter=Sympathy'">
+    <img src="image/sympathy/Condolences Fresh Flower Stand (3).png">
+    <p>Sympathy</p>
 </div>
 
 </div>
