@@ -191,6 +191,13 @@ body{
     width:100%;
 }
 
+.product-container{
+    padding:40px 80px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+}
+
 </style>
 
 <!-- =========================
@@ -205,10 +212,17 @@ body{
 ========================= -->
 <div class="top-bar">
 
-    <!-- SEARCH -->
-    <div class="search-box">
-        <input type="text" id="search" placeholder="Search categories..." onkeyup="searchCategory()">
-    </div>
+    <!-- SEARCH (改成 GET) -->
+    <form method="GET" class="search-box">
+
+        <input type="hidden" name="filter" value="<?= $filter ?>">
+
+        <input type="text"
+               name="search"
+               placeholder="Search categories..."
+               value="<?= $_GET['search'] ?? '' ?>">
+
+    </form>
 
     <!-- FILTER -->
     <div class="filter-bar">
@@ -229,7 +243,7 @@ body{
         </a>
 
         <a href="category.php?filter=Sympathy"
-           class="filter-btn <?= ($filter=="Sympathy")?'active':'' ?>">
+           class="filter-btn <?= ($filter=='Sympathy')?'active':'' ?>">
            Sympathy
         </a>
 
@@ -238,8 +252,8 @@ body{
            Wedding
         </a>
 
-        <a href="category.php?filter=Mother's Day"
-           class="filter-btn <?= ($filter=="Mother's Day")?'active':'' ?>">
+        <a href="category.php?filter=Mother\'s Day"
+           class="filter-btn <?= ($filter=='Mother\'s Day')?'active':'' ?>">
            Mother's Day
         </a>
 
@@ -247,95 +261,127 @@ body{
 
 </div>
 
-<!-- =========================
-     GRID
-========================= -->
-<div class="container">
-
 <?php
+/* =========================
+   PAGINATION + SEARCH + FILTER LOGIC
+========================= */
+
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 9;
+$offset = ($page - 1) * $limit;
+
+$search = $_GET['search'] ?? '';
 
 /* =========================
-   QUERY
+   QUERY (FILTER ONLY)
 ========================= */
 if($filter == 'all'){
-    $sql = "SELECT * FROM categories WHERE status='active' ORDER BY display_order ASC";
-    $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("SELECT * FROM products ORDER BY product_id DESC");
 } else {
-    $sql = "SELECT * FROM categories WHERE status='active' AND category_name=? ORDER BY display_order ASC";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $filter);
+    $stmt = $conn->prepare("
+        SELECT * FROM products 
+        WHERE category_id = (
+            SELECT category_id 
+            FROM categories 
+            WHERE category_name = ?
+        )
+        ORDER BY product_id DESC
+    ");
+    $stmt->bind_param("s",$filter);
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
 
-/* =========================
-   DISPLAY
-========================= */
-if($result && $result->num_rows > 0){
-
-    while($row = $result->fetch_assoc()){
-
-        $img = !empty($row['category_image']) 
-            ? $row['category_image'] 
-            : 'image/default.png';
-?>
-
-<a class="card-link"
-   href="products.php?category_id=<?= $row['category_id'] ?>">
-
-<div class="card">
-
-    <div style="position:relative;">
-        <img src="<?= $img ?>" alt="<?= $row['category_name'] ?>">
-
-        <div class="overlay">
-            <span>View Products →</span>
-        </div>
-    </div>
-
-    <div class="card-body">
-        <h3><?= $row['category_name'] ?></h3>
-        <p><?= $row['category_description'] ?></p>
-    </div>
-
-</div>
-
-</a>
-
-<?php } ?>
-
-<?php } else { ?>
-
-<div class="empty">
-    <h2>No categories found 🌸</h2>
-    <p>Try selecting another filter</p>
-</div>
-
-<?php } ?>
-
-</div>
-
-<script>
+$allProducts = $result->fetch_all(MYSQLI_ASSOC);
 
 /* =========================
-   SEARCH FUNCTION
+   SEARCH FILTER (PHP)
 ========================= */
-function searchCategory(){
-    let input = document.getElementById("search").value.toLowerCase();
-    let cards = document.querySelectorAll(".card");
-
-    cards.forEach(card => {
-        let title = card.querySelector("h3").innerText.toLowerCase();
-
-        if(title.includes(input)){
-            card.style.display = "";
-        } else {
-            card.style.display = "none";
-        }
+if($search != ''){
+    $allProducts = array_filter($allProducts, function($row) use ($search){
+        return stripos($row['product_name'], $search) !== false;
     });
 }
 
-</script>
+/* =========================
+   PAGINATION
+========================= */
+$total = count($allProducts);
+$totalPages = ceil($total / $limit);
+
+$products = array_slice($allProducts, $offset, $limit);
+?>
+
+<!-- =========================
+     GRID
+========================= -->
+<div class="product-container">
+
+<?php if(count($products) > 0){ ?>
+
+    <?php foreach($products as $row){ ?>
+
+        <?php
+        $img = !empty($row['product_image'])
+            ? $row['product_image']
+            : 'image/default.png';
+        ?>
+
+        <div class="card">
+
+            <img src="<?= $img ?>">
+
+            <div class="card-body">
+
+                <h3><?= $row['product_name'] ?></h3>
+
+                <div class="price">
+                    RM <?= number_format($row['product_price'],2) ?>
+                </div>
+
+                <div class="stock">
+                    Stock: <?= $row['stock_quantity'] ?>
+                </div>
+
+            </div>
+
+        </div>
+
+    <?php } ?>
+
+<?php } else { ?>
+
+    <div class="empty">
+        <h2>No products found 🌸</h2>
+    </div>
+
+<?php } ?>
+
+</div>
+
+<!-- =========================
+     PAGINATION
+========================= -->
+<div style="text-align:center; margin:30px 0;">
+
+<?php for($i = 1; $i <= $totalPages; $i++){ ?>
+
+    <a href="category.php?filter=<?= $filter ?>&search=<?= urlencode($search) ?>&page=<?= $i ?>"
+       style="
+            padding:8px 14px;
+            margin:3px;
+            border-radius:6px;
+            text-decoration:none;
+            background:<?= ($page == $i) ? '#e89cae' : '#fff' ?>;
+            color:<?= ($page == $i) ? '#fff' : '#e89cae' ?>;
+            border:1px solid #e89cae;
+       ">
+       <?= $i ?>
+    </a>
+
+<?php } ?>
+
+</div>
 
 <?php include "footer.php"; ?>
